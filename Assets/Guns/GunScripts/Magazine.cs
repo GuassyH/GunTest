@@ -10,11 +10,18 @@ public class Magazine : MonoBehaviour
     [SerializeField] public int CurrentBullets;
     [SerializeField] public GameObject Bullet;
 
+    BoxCollider boxCollider;
     // Start is called before the first frame update
     void Awake()
     {
         CurrentBullets = MaxBullets;
+        boxCollider = this.GetComponentInChildren<BoxCollider>();
     }
 
+    private void Update() {
+        if(transform.parent){
+            boxCollider.isTrigger = true;
+        }
+    }
 
 }

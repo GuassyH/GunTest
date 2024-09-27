@@ -24,14 +24,21 @@ public class CameraLook : MonoBehaviour
 
     Rigidbody rb;
 
+    [HideInInspector] public float modifier;
+    [HideInInspector] public bool IsZoomed;
 
     void Update ()
     {
+
+        if(!IsZoomed){
+            modifier = 1;
+        }
+
         if (axes == RotationAxes.MouseXAndY)
         {
             // Read the mouse input axis
-            rotationX += Input.GetAxis("Mouse X") * sensitivityX;
-            rotationY += Input.GetAxis("Mouse Y") * sensitivityY;
+            rotationX += Input.GetAxis("Mouse X") * sensitivityX * modifier;
+            rotationY += Input.GetAxis("Mouse Y") * sensitivityY * modifier;
 
             rotationX = ClampAngle (rotationX, minimumX, maximumX);
             rotationY = ClampAngle (rotationY, minimumY, maximumY);

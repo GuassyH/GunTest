@@ -33,7 +33,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _CrosshairText:
-        m_Texture: {fileID: 2800000, guid: a99feb77145b8c04c89944222f3758fa, type: 3}
+        m_Texture: {fileID: 2800000, guid: 96520f5c126af754f9ec18c1dec05fc9, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MaskTexture:
@@ -54,7 +54,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _AlphaClipThreshold: 0.281
+    - _AlphaClipThreshold: 0.236
     - _CamScale: -2
     - _Depth: 6
     - _QueueControl: 0
@@ -63,9 +63,9 @@ Material:
     - _UseCircleAsMask: 1
     m_Colors:
     - _MaskColor: {r: 0, g: 0, b: 0, a: 0}
-    - _MaskEdge: {r: 0.4, g: 0.53, b: 0, a: 0}
+    - _MaskEdge: {r: 0.3, g: 0.5, b: 0, a: 0}
     - _MaskScaleAndOffset: {r: 1, g: 1, b: 0, a: 0}
-    - _ScopeScaleAndOffset: {r: 0.5, g: 0.5, b: 0, a: 0}
+    - _ScopeScaleAndOffset: {r: 1, g: 1, b: 0, a: 0}
   m_BuildTextureStacks: []
 --- !u!114 &753051704842263453
 MonoBehaviour:

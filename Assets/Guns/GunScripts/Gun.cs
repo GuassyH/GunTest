@@ -25,6 +25,7 @@ public class Gun : MonoBehaviour
     [SerializeField] private float Kickback = 0.5f;
     [SerializeField] private float Kickup = 0.5f;
     [Space]
+    [SerializeField] private bool AutomaticChamber = true; 
     [SerializeField] private float ManualChamberTime = 1f; 
     [SerializeField] private GameObject Rack;
     [SerializeField] private float UnchamberedRackDistance;
@@ -69,13 +70,14 @@ public class Gun : MonoBehaviour
     
     public bool isPickedUp;
     bool holdingR;
-    
 
+    float CasingsInChamber;
     float holdRtimer;
     int selectedFireModeIndex;
 
     Camera cam;
     Camerainteract camerainteract;
+    CameraLook cameraLook;
     AudioManager audioManager;
 
     Vector3 WantedGunPos;
@@ -94,6 +96,7 @@ public class Gun : MonoBehaviour
 
         audioManager = FindObjectOfType<AudioManager>();
         camerainteract = FindObjectOfType<Camerainteract>();
+        cameraLook = FindObjectOfType<CameraLook>();
 
     }
 
@@ -145,7 +148,9 @@ public class Gun : MonoBehaviour
         
         Debug.Log("CHAMBER");
 
-        // PlayAudio(ChamberSound);
+        if(ChamberSound){
+            audioManager.PlayAudio(ChamberSound, this.transform.position);
+        }
         float goneTime = 0;
 
 
@@ -156,14 +161,15 @@ public class Gun : MonoBehaviour
             goneTime += Time.deltaTime;
             yield return null;
         }
+        Rack.transform.localPosition = Vector3.forward * UnchamberedRackDistance;
 
 
         goneTime = 0;
 
         
-        if(BulletsChambered >= 1){  ExpellCasing(); }
+        if(CasingsInChamber >= 1 || BulletsChambered >= 1){  ExpellCasing(); }
+        CasingsInChamber = 0;
         BulletsChambered = 0;
-
 
 
         while(goneTime <= (timeToChamber * 0.5f)){
@@ -173,6 +179,7 @@ public class Gun : MonoBehaviour
             goneTime += Time.deltaTime;
             yield return null;
         }
+        Rack.transform.localPosition = Vector3.zero;
 
 
         if(CurrentMagazineInfo.CurrentBullets >= 1){
@@ -245,7 +252,7 @@ public class Gun : MonoBehaviour
 
     IEnumerator Shoot(){
         
-        Recoil(0.3f, 0.05f, 0.01f);
+        Recoil(0.3f, 0.05f, 0.01f, 0.01f);
 
         if(BulletsChambered == 0){  Debug.Log(" NO BULLET CHAMBERED");  yield break;    }
         
@@ -287,9 +294,15 @@ public class Gun : MonoBehaviour
             tempBullet.GetComponent<Rigidbody>().AddForce(Barrel.forward * FiringForce, ForceMode.Impulse);
 
             audioManager.PlayAudio(FiringSound, this.transform.position);
-            Recoil(VerticalRecoil, HorizontalRecoil, Kickback);
+            Recoil(VerticalRecoil, HorizontalRecoil, Kickback, Kickup);
             
-            StartCoroutine(Chamber(ChamberTime));
+            BulletsChambered = 0;
+            CasingsInChamber = 1;
+
+            if(AutomaticChamber){
+                StartCoroutine(Chamber(ChamberTime));
+            }
+
         }
 
     }
@@ -302,6 +315,8 @@ public class Gun : MonoBehaviour
         audioManager.PlayAudio(CasingExitSound, this.transform.position);
         tempCasing.GetComponent<Rigidbody>().AddForce(CasingExitPos.transform.up * 2, ForceMode.Impulse);
         tempCasing.GetComponent<Rigidbody>().AddTorque(new Vector3(Random.Range(-1,1),Random.Range(-1,1), Random.Range(-1,1)).normalized * 0.01f, ForceMode.Impulse);
+    
+        CasingsInChamber = 0;
     }
 
 
@@ -324,8 +339,10 @@ public class Gun : MonoBehaviour
     void Aim(){
         if(IsAiming){
             WantedGunPos = Vector3.zero - AimPos.localPosition;
+            cameraLook.IsZoomed = true;
         }
         else if (!IsAiming){
+            cameraLook.IsZoomed = false;
             WantedGunPos = HipfirePos;
         }
         
@@ -362,22 +379,20 @@ public class Gun : MonoBehaviour
 
 
 
-    void Recoil(float verticalRecoil, float horizontalRecoil, float kickback){
+    void Recoil(float verticalRecoil, float horizontalRecoil, float kickback, float kickup){
 
         if(IsAiming){
             if(Vector3.Distance(this.transform.localPosition, Vector3.zero) < .03f){
-                // this.transform.position += (-this.transform.up + this.transform.forward) * -kickback * 0.01f;
-                this.transform.position += this.transform.forward * -kickback * 0.01f;
-                this.transform.position += this.transform.up * Kickup * 0.01f;
+                this.transform.position += -this.transform.forward * kickback * 0.01f;
+                this.transform.position += this.transform.up * kickup * 0.01f;
             }
             this.transform.localEulerAngles += new Vector3(-verticalRecoil, Random.Range(-horizontalRecoil, horizontalRecoil), 0);
 
         }
         else{
             if(Vector3.Distance(this.transform.localPosition, Vector3.zero) < .1f){
-                // this.transform.position += (-this.transform.up + this.transform.forward) * -kickback * 0.01f;
-                this.transform.position += this.transform.forward * -kickback * 0.01f;
-                this.transform.position += this.transform.up * Kickup * 0.01f;
+                this.transform.position += -this.transform.forward * kickback * 0.01f;
+                this.transform.position += this.transform.up * kickup * 0.01f;
             }
             this.transform.localEulerAngles += new Vector3(-verticalRecoil * HipfireRecoilMultiplier, Random.Range(-horizontalRecoil, horizontalRecoil) * HipfireRecoilMultiplier * 2, 0);    
 

@@ -15,12 +15,14 @@ public class ScopeZoom : MonoBehaviour
 
     int selectedZoomValue;
     Gun gunParent;
-    
+    CameraLook cameraLook;
+
     // Start is called before the first frame update
     void Start()
     {
         selectedZoomValue = 0;
         gunParent = transform.GetComponentInParent<Gun>();
+        cameraLook = FindAnyObjectByType<CameraLook>();
     }
 
     // Update is called once per frame
@@ -29,7 +31,8 @@ public class ScopeZoom : MonoBehaviour
         if(gunParent.IsAiming){
 
             scopeCam.enabled = true;
-            
+
+
             if(Input.GetKey(KeyCode.LeftAlt)){
 
                 if(Input.GetAxis("Mouse ScrollWheel") > 0){
@@ -45,12 +48,16 @@ public class ScopeZoom : MonoBehaviour
                     }
                 }
             }
+            //cameraLook.modifier = ZoomValues[selectedZoomValue] / 50;
+            cameraLook.modifier = scopeCam.fieldOfView / Camera.main.fieldOfView * 1.5f;
+        }
+        else{
+          scopeCam.enabled = false;
 
-        }else{
-            scopeCam.enabled = false;
         }
 
-        
         scopeCam.fieldOfView = Mathf.Lerp(scopeCam.fieldOfView, ZoomValues[selectedZoomValue], zoopSpeed * Time.deltaTime);
+        
+        
     }
 }
