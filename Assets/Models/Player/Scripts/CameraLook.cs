@@ -17,6 +17,10 @@ public class CameraLook : MonoBehaviour
     public float maximumY = 60F;
     public Transform orientation;
 
+    public float LeanAngle = 10;
+    public Transform LeanAroundPoint;
+    public float leanSpeed = 10;
+
     float rotationX = 0F;
     float rotationY = 0F;
 
@@ -65,6 +69,8 @@ public class CameraLook : MonoBehaviour
             transform.localRotation = originalRotation * yQuaternion;
         }
 
+        Lean();
+
         orientation.eulerAngles = new Vector3(0,rotationX);
     }
 
@@ -84,6 +90,29 @@ public class CameraLook : MonoBehaviour
         if (angle > 360F)
             angle -= 360F;
         return Mathf.Clamp (angle, min, max);
+    }
+
+    void Lean(){
+
+
+        float lean = 0;
+        // Lean Right
+        if(Input.GetKey(KeyCode.E)){
+            // transform.RotateAround(LeanAroundPoint.localPosition, LeanAroundPoint.transform.forward, 1f);
+            lean = -LeanAngle;
+        }
+        // Lean Left
+        else if(Input.GetKey(KeyCode.Q)){
+            lean = LeanAngle;
+            
+        }   
+        else{
+            lean = 0;
+        }
+
+        // Vector3 LeanRot = Vector3.zero;
+        // LeanAroundPoint.localEulerAngles = LeanRot;
+        // this.transform.RotateAround(LeanAroundPoint.position, this.transform.forward, lean);
     }
 }
 

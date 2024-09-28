@@ -14,18 +14,18 @@ public class Gun : MonoBehaviour
     [Header("Firing")]
     FireMode fireMode;
     [SerializeField] private List<FireMode> firemodes = new List<FireMode>() { FireMode.Semi };
-    [SerializeField] private float FiringForce = 50f;
+    [SerializeField] private float FiringForce = 350f;
+    [SerializeField] private bool AutomaticChamber = true; 
     [SerializeField] private float ChamberTime = 0.05f; 
+    [SerializeField] private float BulletDamage = 1;
     
     [Header("Handling")]
     [SerializeField] private float VerticalRecoil = 4f;
     [SerializeField] private float HorizontalRecoil = 1f;
     [SerializeField] private float HipfireRecoilMultiplier = 2f;
-    [Space]
     [SerializeField] private float Kickback = 0.5f;
     [SerializeField] private float Kickup = 0.5f;
     [Space]
-    [SerializeField] private bool AutomaticChamber = true; 
     [SerializeField] private float ManualChamberTime = 1f; 
     [SerializeField] private GameObject Rack;
     [SerializeField] private float UnchamberedRackDistance;
@@ -52,8 +52,9 @@ public class Gun : MonoBehaviour
 
     [Header("Aiming")]
     [SerializeField] private Transform AimPos;
-    [SerializeField] private Vector3 HipfirePos;
+    [SerializeField] public Vector3 HipfirePos;
     [SerializeField] private float AimDownSpeed = 8f;
+    [SerializeField] public float AimFOV = 75;
     public bool IsAiming;
 
     [Header("Sounds")]
@@ -66,14 +67,16 @@ public class Gun : MonoBehaviour
 
 
 
-    Transform Holder;
+    [HideInInspector] public Transform Holder;
     
-    public bool isPickedUp;
     bool holdingR;
 
     float CasingsInChamber;
     float holdRtimer;
     int selectedFireModeIndex;
+
+    private bool isChambering;
+    private bool isReloading;
 
     Camera cam;
     Camerainteract camerainteract;
@@ -84,7 +87,8 @@ public class Gun : MonoBehaviour
 
 
     // Just for debug purposes
-    public int MagazineBulletCount;
+    [HideInInspector] public bool isPickedUp;
+    [HideInInspector] public int MagazineBulletCount;
     
 
     void Start()
@@ -97,6 +101,9 @@ public class Gun : MonoBehaviour
         audioManager = FindObjectOfType<AudioManager>();
         camerainteract = FindObjectOfType<Camerainteract>();
         cameraLook = FindObjectOfType<CameraLook>();
+
+        isChambering = false;
+        isReloading = false;
 
     }
 
@@ -130,7 +137,8 @@ public class Gun : MonoBehaviour
             }
 
             if(Input.GetKeyUp(KeyCode.R)){  
-                if(holdRtimer <= 0.4f){   StartCoroutine(Chamber(ManualChamberTime));  }
+
+                if(holdRtimer <= 0.4f){ StartCoroutine(Chamber(ManualChamberTime));  }
                 holdRtimer = 0f;
                 holdingR = false;
             }
@@ -146,6 +154,7 @@ public class Gun : MonoBehaviour
 
     IEnumerator Chamber(float timeToChamber){
         
+        if(isChambering){   Debug.Log("ALREADY CHAMBERING");    yield break; }
         Debug.Log("CHAMBER");
 
         if(ChamberSound){
@@ -153,7 +162,7 @@ public class Gun : MonoBehaviour
         }
         float goneTime = 0;
 
-
+        isChambering = true;
         while(goneTime <= (timeToChamber * 0.5f)){
             
             Rack.transform.localPosition = Vector3.forward * UnchamberedRackDistance * (goneTime / (timeToChamber * 0.5f));
@@ -162,7 +171,6 @@ public class Gun : MonoBehaviour
             yield return null;
         }
         Rack.transform.localPosition = Vector3.forward * UnchamberedRackDistance;
-
 
         goneTime = 0;
 
@@ -180,7 +188,8 @@ public class Gun : MonoBehaviour
             yield return null;
         }
         Rack.transform.localPosition = Vector3.zero;
-
+        isChambering = false;
+        isReloading = false;
 
         if(CurrentMagazineInfo.CurrentBullets >= 1){
 
@@ -207,7 +216,11 @@ public class Gun : MonoBehaviour
 
 
     IEnumerator Reload(){
+
+        if(isReloading){    Debug.Log("ALREADY RELOADING"); yield break;    }
         Debug.Log("RELOAD");
+
+        isReloading = true;
 
         bool shouldChamber = false;
 
@@ -243,7 +256,9 @@ public class Gun : MonoBehaviour
 
         yield return new WaitForSeconds(0.3f);
 
+
         if(shouldChamber){  StartCoroutine(Chamber(ManualChamberTime));  }
+        else{   isReloading = false;    }
 
         yield return null;
     }
@@ -292,6 +307,7 @@ public class Gun : MonoBehaviour
 
             GameObject tempBullet = Instantiate(Bullet, Barrel.position, Quaternion.Euler(Barrel.eulerAngles.x - 90f, Barrel.eulerAngles.y, 0));
             tempBullet.GetComponent<Rigidbody>().AddForce(Barrel.forward * FiringForce, ForceMode.Impulse);
+            tempBullet.GetComponent<Bullet>().Damage = BulletDamage;;
 
             audioManager.PlayAudio(FiringSound, this.transform.position);
             Recoil(VerticalRecoil, HorizontalRecoil, Kickback, Kickup);
@@ -366,11 +382,16 @@ public class Gun : MonoBehaviour
 
 
     void LookSway(){
+
+        float aimSwayModifierX = cameraLook.modifier;
+        float aimSwayModifierY = cameraLook.modifier;
+
+
         if(IsAiming){
-            this.transform.localEulerAngles += new Vector3(-Input.GetAxisRaw("Mouse Y") * AimSwayAmount * Time.deltaTime, Input.GetAxisRaw("Mouse X") * AimSwayAmount * Time.deltaTime, 0);
+            this.transform.localEulerAngles += new Vector3(-Input.GetAxisRaw("Mouse Y") * AimSwayAmount * aimSwayModifierY * Time.deltaTime, Input.GetAxisRaw("Mouse X") * aimSwayModifierX * AimSwayAmount * Time.deltaTime, 0);
         }
         else{
-            this.transform.localEulerAngles += new Vector3(-Input.GetAxisRaw("Mouse Y") * HipSwayAmount * Time.deltaTime * 2, Input.GetAxisRaw("Mouse X") * HipSwayAmount * Time.deltaTime, 0);
+            this.transform.localEulerAngles += new Vector3(-Input.GetAxisRaw("Mouse Y") * HipSwayAmount * aimSwayModifierY * Time.deltaTime * 2, Input.GetAxisRaw("Mouse X") * aimSwayModifierX * HipSwayAmount * Time.deltaTime, 0);
         }
     }
 

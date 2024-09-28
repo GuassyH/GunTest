@@ -6,17 +6,17 @@ using UnityEngine;
 public class Bullet : MonoBehaviour
 {
 
-    public GameObject Casing;
-
-  
-    public AudioClip ImpactSound;
-    public GameObject ImpactExplosion;
-
 
     public enum BulletType { Normal, HE, AP }
     public BulletType bulletType;
 
-    public int Damage = 1;
+    [HideInInspector] public float Damage;
+
+    public GameObject Casing;
+  
+    public AudioClip ImpactSound;
+    public GameObject ImpactExplosion;
+
     private Rigidbody rb;
 
     AudioManager audioManager;
@@ -43,10 +43,39 @@ public class Bullet : MonoBehaviour
     private void OnCollisionEnter(Collision other) {
         audioManager.PlayAudio(ImpactSound, this.transform.position);
         Instantiate(ImpactExplosion, this.transform.position, Quaternion.identity);
+
+
+
+        switch(bulletType){
+            case BulletType.Normal:
+                Normal(other.transform.GetComponent<Health>());
+                break;
+            case BulletType.HE:
+                HE(other.transform.GetComponent<Health>());
+                break;
+            case BulletType.AP:
+                AP(other.transform.GetComponent<Health>());
+                break;
+        }
+
+    }
+
+    void Normal(Health health){
+        if(health){ health.TakeDamage(Damage); };
+        audioManager.PlayAudio(ImpactSound, this.transform.position);
         Destroy(this.gameObject);
     }
 
-    
+    void HE(Health health){
+        if(health){ health.TakeDamage(Damage); };
+        Destroy(this.gameObject);
+    }
+
+    void AP(Health health){
+        if(health){ health.TakeDamage(Damage); };
+        audioManager.PlayAudio(ImpactSound, this.transform.position);
+        Destroy(this.gameObject);
+    }
 
 
 }

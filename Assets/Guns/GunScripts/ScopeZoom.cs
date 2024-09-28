@@ -8,7 +8,7 @@ public class ScopeZoom : MonoBehaviour
 
     public List<float> ZoomValues = new List<float>{ 40f };
     public Camera scopeCam;
-    public float zoopSpeed = 24;
+    public float zoomSpeed = 24;
     [Space]
 
     public MeshRenderer ScopeOcular;
@@ -56,7 +56,7 @@ public class ScopeZoom : MonoBehaviour
 
         }
 
-        scopeCam.fieldOfView = Mathf.Lerp(scopeCam.fieldOfView, ZoomValues[selectedZoomValue], zoopSpeed * Time.deltaTime);
+        scopeCam.fieldOfView = Mathf.Lerp(scopeCam.fieldOfView, ZoomValues[selectedZoomValue], zoomSpeed * Time.deltaTime);
         
         
     }
