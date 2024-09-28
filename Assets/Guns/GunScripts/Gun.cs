@@ -14,7 +14,7 @@ public class Gun : MonoBehaviour
     [Header("Firing")]
     FireMode fireMode;
     [SerializeField] private List<FireMode> firemodes = new List<FireMode>() { FireMode.Semi };
-    [SerializeField] private float FiringForce = 350f;
+    [SerializeField] private float FiringForce = 35f;
     [SerializeField] private bool AutomaticChamber = true; 
     [SerializeField] private float ChamberTime = 0.05f; 
     [SerializeField] private float BulletDamage = 1;

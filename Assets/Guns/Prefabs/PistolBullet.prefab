@@ -153,12 +153,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7907da7e87872254382c91b4a8d51c30, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  bulletType: 0
+  Damage: 1
   Casing: {fileID: 7254555500759458016, guid: 210bcf946e38e4a4bb3cf59323550d71, type: 3}
   ImpactSound: {fileID: 8300000, guid: 3c3924d5716aedf4282367ebb06293e5, type: 3}
   ImpactExplosion: {fileID: 1793756199422772051, guid: c913e1afe0e037b4ca73d1f1c700e6cd,
     type: 3}
-  bulletType: 0
-  Damage: 1
 --- !u!54 &1305110280431181891
 Rigidbody:
   m_ObjectHideFlags: 0
