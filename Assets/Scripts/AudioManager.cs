@@ -7,17 +7,22 @@ public class AudioManager : MonoBehaviour
 
     public GameObject AudioSoundPrefab;
 
+
+
     // Start is called before the first frame update
     void Start()
     {
         
     }
 
+
+
     // Update is called once per frame
     void Update()
     {
         
     }
+
 
         
     public void PlayAudio(AudioClip audioClip, Vector3 spawnPos){
@@ -26,4 +31,7 @@ public class AudioManager : MonoBehaviour
         tempAudioSource.GetComponent<AudioSource>().Play();
         tempAudioSource.AddComponent<DestroyAfterTime>().Lifetime = audioClip.length + 1;
     }
+
+
+    
 }

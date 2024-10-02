@@ -33,7 +33,7 @@ public class Camerainteract : MonoBehaviour
     {
         Physics.Raycast(this.transform.position, this.transform.forward, out AllHit, 400f);
 
-        if(Physics.Raycast(this.transform.position, this.transform.forward, out hit, 3f, Interactable)){
+        if(Physics.SphereCast(this.transform.position, 0.1f, this.transform.forward, out hit, 3f, Interactable)){
             CrosshairAnim.SetBool("Hovering", true);
             if(Input.GetKeyDown(KeyCode.F)){
                 if(hit.transform.CompareTag("Pickupable")){

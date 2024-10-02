@@ -6,11 +6,13 @@ public class Magazine : MonoBehaviour
 {
 
 
-    [SerializeField] private int MaxBullets;
+    [SerializeField, Min(0)] private int MaxBullets;
     [SerializeField] public int CurrentBullets;
     [SerializeField] public GameObject Bullet;
 
     BoxCollider boxCollider;
+
+
     // Start is called before the first frame update
     void Awake()
     {

@@ -3,59 +3,61 @@ using System.Collections.Generic;
 using UnityEngine;
 
 
-
 [RequireComponent(typeof(Rigidbody))]
 public class Gun : MonoBehaviour
 {
-    enum FireMode { Semi, Burst, Full };
 
-    public Rigidbody rb;
+    enum FireMode { Semi, Burst, Full };
+    FireMode fireMode;
+
 
     [Header("Firing")]
-    FireMode fireMode;
-    [SerializeField] private List<FireMode> firemodes = new List<FireMode>() { FireMode.Semi };
-    [SerializeField] private float FiringForce = 35f;
-    [SerializeField] private bool AutomaticChamber = true; 
-    [SerializeField] private float ChamberTime = 0.05f; 
-    [SerializeField] private float BulletDamage = 1;
+    [SerializeField, Tooltip("What modes of firing can you choose between")]        private List<FireMode> firemodes = new List<FireMode>() { FireMode.Semi };
+    [SerializeField, Tooltip("The Force the bullet fires with"), Min(0f)]           private float FiringForce = 35f;
+    [SerializeField, Tooltip("When you fire does the gun auto-chamber")]            private bool AutomaticChamber = true; 
+    [SerializeField, Tooltip("How fast the gun auto-chambers"), Min(0f)]            private float ChamberTime = 0.05f; 
     
+
     [Header("Handling")]
-    [SerializeField] private float VerticalRecoil = 4f;
-    [SerializeField] private float HorizontalRecoil = 1f;
-    [SerializeField] private float HipfireRecoilMultiplier = 2f;
-    [SerializeField] private float Kickback = 0.5f;
-    [SerializeField] private float Kickup = 0.5f;
+    [SerializeField, Tooltip("How much the gun rotates vertically (up/down)")]      private float VerticalRecoil = 4f;
+    [SerializeField, Tooltip("How much the gun rotates horizontally (left/right)")] private float HorizontalRecoil = 1f;
+    [SerializeField, Tooltip("How much MORE the gun recoils if you're hipfiring")]  private float HipfireRecoilMultiplier = 2f;
+    [SerializeField, Tooltip("How much the gun kicks downwards")]                   private float Kickback = 0.5f;
+    [SerializeField, Tooltip("How much the gun kicks upwards")]                     private float Kickup = 0.5f;
     [Space]
-    [SerializeField] private float ManualChamberTime = 1f; 
-    [SerializeField] private GameObject Rack;
-    [SerializeField] private float UnchamberedRackDistance;
+    [SerializeField, Tooltip("How quickly you chamber your gun"), Min(0f)]          private float ManualChamberTime = 1f; 
+    [SerializeField, Tooltip("The object Rack/Chamber that moves back")]            private GameObject Rack;
+    [SerializeField, Tooltip("How far back the chamber moves when unchambering")]   private float UnchamberedRackDistance;
     [Space]
-    [SerializeField] private float RecoverSpeed = 12;
-    [SerializeField] private float ReloadTime = 2f;
+    [SerializeField, Tooltip("How fast you recover from shooting"), Min(0f)]        private float RecoverSpeed = 12;
+    [SerializeField, Tooltip("How much time it takes to reload"), Min(0f)]          private float ReloadTime = 2f;
     [Space]
-    [SerializeField] private float HipSwayAmount = 15f;
-    [SerializeField] private float AimSwayAmount = 10f;
+    [SerializeField, Tooltip("How much the gun sways when not aiming")]             private float HipSwayAmount = 60f;
+    [SerializeField, Tooltip("How much the gun sways when aiming")]                 private float AimSwayAmount = 20f;
+
 
     [Header("Mag")]
-    [SerializeField] private GameObject MagazinePrefab; 
-    [SerializeField] private Transform MagazinePosition;
+    [SerializeField, Tooltip("What magazine prefab to load into the gun")]          private GameObject MagazinePrefab; 
+    [SerializeField, Tooltip("Where the magazine should centre on")]                private Transform MagazinePosition;
     [Space]
-    [SerializeField] private GameObject CurrentMagazine;
-    [SerializeField] private Magazine CurrentMagazineInfo;
+    [SerializeField, Tooltip("The current magazine inserted in the gun")]           private GameObject CurrentMagazine;
+    [SerializeField, Tooltip("Gets the inserted magazines info, such as bullets")]  private Magazine CurrentMagazineInfo;
 
 
     [Header("Bullet")]
-    [SerializeField] private int BulletsChambered;
-    [SerializeField] private Transform Barrel;
-    [SerializeField] private GameObject Bullet;
-    [SerializeField] private Transform CasingExitPos;
+    [SerializeField, Tooltip("Damage the bullet does to the object"), Min(0f)]      private float BulletDamage = 1;
+    [SerializeField, Tooltip("How many bullets (0 or 1) are in the chamber")]       private int BulletsChambered;
+    [SerializeField, Tooltip("Where the barrel is (Where the bullets leave)")]      private Transform Barrel;
+    [SerializeField, Tooltip("What bullet prefab is being shot out")]               private GameObject Bullet;
+    [SerializeField, Tooltip("Where the casings exit (align transforms up)")]       private Transform CasingExitPos;
+
 
     [Header("Aiming")]
-    [SerializeField] private Transform AimPos;
-    [SerializeField] public Vector3 HipfirePos;
-    [SerializeField] private float AimDownSpeed = 8f;
-    [SerializeField] public float AimFOV = 75;
-    public bool IsAiming;
+    [SerializeField, Tooltip("Where the camera will move to when aiming")]          private Transform AimPos;
+    [SerializeField, Tooltip("Where the gun is when hipfiring")]                    public Vector3 HipfirePos;
+    [SerializeField, Tooltip("How fast you go to aim"), Min(0f)]                    private float AimDownSpeed = 8f;
+    [SerializeField, Tooltip("Camera FOV when aiming"), Min(0f)]                    public float AimFOV = 75;
+
 
     [Header("Sounds")]
     [SerializeField] private AudioClip FiringSound;
@@ -67,16 +69,21 @@ public class Gun : MonoBehaviour
 
 
 
+
+    [HideInInspector] public bool IsAiming;
+    [HideInInspector] public bool isPickedUp;
     [HideInInspector] public Transform Holder;
+    [HideInInspector] public Rigidbody rb;
     
-    bool holdingR;
 
     float CasingsInChamber;
     float holdRtimer;
     int selectedFireModeIndex;
 
-    private bool isChambering;
-    private bool isReloading;
+    bool isChambering;
+    bool isReloading;
+
+    bool holdingR;
 
     Camera cam;
     Camerainteract camerainteract;
@@ -86,10 +93,6 @@ public class Gun : MonoBehaviour
     Vector3 WantedGunPos;
 
 
-    // Just for debug purposes
-    [HideInInspector] public bool isPickedUp;
-    [HideInInspector] public int MagazineBulletCount;
-    
 
     void Start()
     {
@@ -104,14 +107,13 @@ public class Gun : MonoBehaviour
 
         isChambering = false;
         isReloading = false;
-
     }
 
 
     void Update()
     {
 
-        if(transform.parent.name == "Holder"){  isPickedUp = true; Holder = transform.parent;  } else {    isPickedUp = false; Holder = null; }
+        if(transform.parent) { if(transform.parent.name == "Holder"){  isPickedUp = true; Holder = transform.parent;  } else {    isPickedUp = false; Holder = null; } } else{  isPickedUp = false; }
 
 
         if(!isPickedUp){    return;    }
@@ -130,7 +132,7 @@ public class Gun : MonoBehaviour
         if(Input.GetKeyDown(KeyCode.R)){   holdingR = true;   }
         if(holdingR){
             holdRtimer += Time.deltaTime;
-            if(holdRtimer > 0.4f){  
+            if(holdRtimer > 0.3f){  
                 StartCoroutine(Reload());   
                 holdRtimer = 0;     
                 holdingR = false;   
@@ -138,7 +140,7 @@ public class Gun : MonoBehaviour
 
             if(Input.GetKeyUp(KeyCode.R)){  
 
-                if(holdRtimer <= 0.4f){ StartCoroutine(Chamber(ManualChamberTime));  }
+                if(holdRtimer <= 0.3f){ StartCoroutine(Chamber(ManualChamberTime));  }
                 holdRtimer = 0f;
                 holdingR = false;
             }
@@ -146,12 +148,10 @@ public class Gun : MonoBehaviour
 
         if(Input.GetKeyDown(KeyCode.X)){    ChangeFireMode();   }
 
-
-        MagazineBulletCount = CurrentMagazineInfo.CurrentBullets;
     }
 
 
-
+    // Chambers the gun / Takes bullet from mag and puts it into the chamber
     IEnumerator Chamber(float timeToChamber){
         
         if(isChambering){   Debug.Log("ALREADY CHAMBERING");    yield break; }
@@ -174,6 +174,9 @@ public class Gun : MonoBehaviour
 
         goneTime = 0;
 
+        if(timeToChamber == ManualChamberTime){
+            Recoil(0f, 0f, 0.7f, 0f);
+        }
         
         if(CasingsInChamber >= 1 || BulletsChambered >= 1){  ExpellCasing(); }
         CasingsInChamber = 0;
@@ -214,7 +217,7 @@ public class Gun : MonoBehaviour
     }
 
 
-
+    // Reloads the gun / Drops old mag and puts new one in. Chambers only if mag and chamber are both empty
     IEnumerator Reload(){
 
         if(isReloading){    Debug.Log("ALREADY RELOADING"); yield break;    }
@@ -237,12 +240,13 @@ public class Gun : MonoBehaviour
                 
             CurrentMagazine.transform.SetParent(null);
             CurrentMagazine = null;
-            CurrentMagazineInfo = null;
-            MagazineBulletCount = 0;
+            CurrentMagazineInfo = null; 
         }
 
 
         yield return new WaitForSeconds(ReloadTime - 0.3f);
+
+        Recoil(-0.3f, 0.05f, 0.01f, 0.6f);
 
         audioManager.PlayAudio(MagInsertSound, this.transform.position);
 
@@ -264,7 +268,7 @@ public class Gun : MonoBehaviour
     }
 
 
-
+    // Pull the trigger and do whatever the firemode says
     IEnumerator Shoot(){
         
         Recoil(0.3f, 0.05f, 0.01f, 0.01f);
@@ -300,7 +304,7 @@ public class Gun : MonoBehaviour
     }
 
 
-
+    // Fire a bullet and remove the bullet from the chamber but leave the casing
     void FireBullet(){
     
         if(BulletsChambered == 1){
@@ -324,19 +328,19 @@ public class Gun : MonoBehaviour
     }
 
 
-
+    // Expell the casing
     void ExpellCasing(){
         GameObject tempCasing = Instantiate(Bullet.GetComponent<Bullet>().Casing, CasingExitPos.position, Quaternion.Euler(Barrel.eulerAngles.x - 90f, Barrel.eulerAngles.y, 0));
         //tempCasing.transform.rotation = Barrel.transform.rotation;
         audioManager.PlayAudio(CasingExitSound, this.transform.position);
-        tempCasing.GetComponent<Rigidbody>().AddForce(CasingExitPos.transform.up * 2, ForceMode.Impulse);
+        tempCasing.GetComponent<Rigidbody>().AddForce(CasingExitPos.transform.up * (2 * 0.05f), ForceMode.Impulse);
         tempCasing.GetComponent<Rigidbody>().AddTorque(new Vector3(Random.Range(-1,1),Random.Range(-1,1), Random.Range(-1,1)).normalized * 0.01f, ForceMode.Impulse);
-    
-        CasingsInChamber = 0;
+
+        CasingsInChamber = 0;   
     }
 
 
-
+    // Change the mode you're firing in (semi, burst, full)
     void ChangeFireMode(){
 
         if(selectedFireModeIndex < firemodes.Count-1){
@@ -351,7 +355,7 @@ public class Gun : MonoBehaviour
     }
 
 
-
+    // Move gun holder to aiming pos or hipfire pos
     void Aim(){
         if(IsAiming){
             WantedGunPos = Vector3.zero - AimPos.localPosition;
@@ -368,19 +372,19 @@ public class Gun : MonoBehaviour
     }
 
 
-
+    // Move the gun towards its normal pos (makes it so recoil is temporary)
     void MoveGun(){
         this.transform.localPosition = Vector3.MoveTowards(this.transform.localPosition, Vector3.zero, RecoverSpeed * Time.deltaTime * 0.025f);
     }
 
 
-
+    // Same as MoveGun but with rotation
     void RotateGun(){
         this.transform.localRotation = Quaternion.Slerp(this.transform.localRotation, Quaternion.Euler(0, 0, 0), RecoverSpeed * Time.deltaTime);
     }
 
 
-
+    // Sway the gun when you look around
     void LookSway(){
 
         float aimSwayModifierX = cameraLook.modifier;
@@ -399,7 +403,7 @@ public class Gun : MonoBehaviour
 
 
 
-
+    // Add recoil to the gun 
     void Recoil(float verticalRecoil, float horizontalRecoil, float kickback, float kickup){
 
         if(IsAiming){
@@ -418,6 +422,7 @@ public class Gun : MonoBehaviour
             this.transform.localEulerAngles += new Vector3(-verticalRecoil * HipfireRecoilMultiplier, Random.Range(-horizontalRecoil, horizontalRecoil) * HipfireRecoilMultiplier * 2, 0);    
 
         }
+
     }
 
 
