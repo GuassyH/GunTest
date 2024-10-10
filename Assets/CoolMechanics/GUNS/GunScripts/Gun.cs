@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Collections;
 using UnityEngine;
 
 
@@ -41,23 +42,24 @@ public class Gun : MonoBehaviour
     [SerializeField, Tooltip("Where the magazine should centre on")]                private Transform MagazinePosition;
     [Space]
     [SerializeField, Tooltip("The current magazine inserted in the gun")]           private GameObject CurrentMagazine;
-    [SerializeField, Tooltip("Gets the inserted magazines info, such as bullets")]  private Magazine CurrentMagazineInfo;
+    [SerializeField, Tooltip("The inserted magazines info, like current bullets")]  private Magazine CurrentMagazineInfo;
 
 
     [Header("Bullet")]
     [SerializeField, Tooltip("Damage the bullet does to the object"), Min(0f)]      private float BulletDamage = 1;
-    [SerializeField, Tooltip("How many bullets (0 or 1) are in the chamber")]       private int BulletsChambered;
     [SerializeField, Tooltip("Where the barrel is (Where the bullets leave)")]      private Transform Barrel;
     [SerializeField, Tooltip("What bullet prefab is being shot out")]               private GameObject Bullet;
     [SerializeField, Tooltip("Where the casings exit (align transforms up)")]       private Transform CasingExitPos;
+    [SerializeField, Tooltip("How many bullets are in the chamber"), Min(0)]        private int BulletsChambered;
 
 
     [Header("Aiming")]
+    [SerializeField, Tooltip("Can you aim this gun?")]                              private bool AimableGun = true;
     [SerializeField, Tooltip("Where the camera will move to when aiming")]          private Transform AimPos;
     [SerializeField, Tooltip("Where the gun is when hipfiring")]                    public Vector3 HipfirePos;
     [SerializeField, Tooltip("How fast you go to aim"), Min(0f)]                    private float AimDownSpeed = 8f;
-    [SerializeField, Tooltip("Camera FOV when aiming"), Min(0f)]                    public float AimFOV = 75;
-
+    [SerializeField, Tooltip("Camera FOV when aiming"), Min(0f)]                    public float AimFOV = 70;
+    
 
     [Header("Sounds")]
     [SerializeField] private AudioClip FiringSound;
@@ -68,14 +70,13 @@ public class Gun : MonoBehaviour
 
 
 
-
-
     [HideInInspector] public bool IsAiming;
     [HideInInspector] public bool isPickedUp;
     [HideInInspector] public Transform Holder;
     [HideInInspector] public Rigidbody rb;
     
 
+    float clampedRot = 60;
     float CasingsInChamber;
     float holdRtimer;
     int selectedFireModeIndex;
@@ -120,9 +121,10 @@ public class Gun : MonoBehaviour
 
         if(Input.GetKeyDown(KeyCode.Mouse0)){   audioManager.PlayAudio(TriggerPullSound, this.transform.position);   StartCoroutine(Shoot());    }
         
-        
-        if(Input.GetKey(KeyCode.Mouse1)){   IsAiming = true;    }
-        else{   IsAiming = false;   }
+        if(AimableGun){
+            if(Input.GetKey(KeyCode.Mouse1)){   IsAiming = true;    }
+            else{   IsAiming = false;   }
+        }
         
         Aim();
         MoveGun();
@@ -150,6 +152,9 @@ public class Gun : MonoBehaviour
 
     }
 
+
+
+    #region Gun Mechanics
 
     // Chambers the gun / Takes bullet from mag and puts it into the chamber
     IEnumerator Chamber(float timeToChamber){
@@ -308,7 +313,6 @@ public class Gun : MonoBehaviour
     void FireBullet(){
     
         if(BulletsChambered == 1){
-
             GameObject tempBullet = Instantiate(Bullet, Barrel.position, Quaternion.Euler(Barrel.eulerAngles.x - 90f, Barrel.eulerAngles.y, 0));
             tempBullet.GetComponent<Rigidbody>().AddForce(Barrel.forward * FiringForce, ForceMode.Impulse);
             tempBullet.GetComponent<Bullet>().Damage = BulletDamage;;
@@ -322,7 +326,6 @@ public class Gun : MonoBehaviour
             if(AutomaticChamber){
                 StartCoroutine(Chamber(ChamberTime));
             }
-
         }
 
     }
@@ -371,6 +374,7 @@ public class Gun : MonoBehaviour
 
     }
 
+    #endregion Gun Mechanics
 
     // Move the gun towards its normal pos (makes it so recoil is temporary)
     void MoveGun(){
@@ -400,27 +404,31 @@ public class Gun : MonoBehaviour
     }
 
 
-
-
-
     // Add recoil to the gun 
     void Recoil(float verticalRecoil, float horizontalRecoil, float kickback, float kickup){
 
-        if(IsAiming){
-            if(Vector3.Distance(this.transform.localPosition, Vector3.zero) < .03f){
-                this.transform.position += -this.transform.forward * kickback * 0.01f;
-                this.transform.position += this.transform.up * kickup * 0.01f;
-            }
-            this.transform.localEulerAngles += new Vector3(-verticalRecoil, Random.Range(-horizontalRecoil, horizontalRecoil), 0);
+        
+        float z = Random.Range(-1f, 1f);
 
+
+        if(IsAiming){
+
+            this.transform.position += -this.transform.forward * kickback * 0.01f;
+            this.transform.position += this.transform.up * kickup * 0.01f;
+            this.transform.localPosition = Vector3.ClampMagnitude(this.transform.localPosition, 0.05f);
+            
+            // float z = Random.Range(-1, 1);
+
+            this.transform.localEulerAngles += new Vector3(-verticalRecoil, Random.Range(-horizontalRecoil, horizontalRecoil), z);
         }
         else{
-            if(Vector3.Distance(this.transform.localPosition, Vector3.zero) < .1f){
-                this.transform.position += -this.transform.forward * kickback * 0.01f;
-                this.transform.position += this.transform.up * kickup * 0.01f;
-            }
-            this.transform.localEulerAngles += new Vector3(-verticalRecoil * HipfireRecoilMultiplier, Random.Range(-horizontalRecoil, horizontalRecoil) * HipfireRecoilMultiplier * 2, 0);    
+            this.transform.position += -this.transform.forward * kickback * 0.01f;
+            this.transform.position += this.transform.up * kickup * 0.01f;
+            this.transform.localPosition = Vector3.ClampMagnitude(this.transform.localPosition, 0.08f);
 
+            // float z = Random.Range(-2, 2);
+            
+            this.transform.localEulerAngles += new Vector3(-verticalRecoil * HipfireRecoilMultiplier, Random.Range(-horizontalRecoil, horizontalRecoil) * HipfireRecoilMultiplier * 2, z);    
         }
 
     }

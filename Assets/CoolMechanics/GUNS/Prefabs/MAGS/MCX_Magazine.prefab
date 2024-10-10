@@ -178,6 +178,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d510b147f1e7c6a4a94cdca8ccb62bf1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  MaxBullets: 300
+  MaxBullets: 30
   CurrentBullets: 0
   Bullet: {fileID: 6063770957346666806, guid: a21135c5f5dcf4b4e84c486a198f262c, type: 3}
